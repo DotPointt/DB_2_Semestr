@@ -4,7 +4,7 @@
 ![alt text](image.png)
 
 #физическая модель:
-```sql
+'''sql
 create table customers(
 	customer_id serial primary key,
 	name varchar,
@@ -28,7 +28,7 @@ create table deals(
 	date date,
 	is_wholesale bool
 );
-```
+'''
 
 '''
 airjgiargairg
