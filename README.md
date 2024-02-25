@@ -2,7 +2,9 @@
 ##Цель: Провести оценку производитеьлности с помощью PGBENCH
 #Концептуальный вид бд
 ![alt text](image.png)
+
 #физическая модель:
+```sql
 create table customers(
 	customer_id serial primary key,
 	name varchar,
@@ -26,3 +28,8 @@ create table deals(
 	date date,
 	is_wholesale bool
 );
+```
+
+'''
+airjgiargairg
+'''
