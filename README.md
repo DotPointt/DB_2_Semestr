@@ -214,4 +214,5 @@ c 50
 ![alt text](image-5.png)
 ![alt text](image-6.png)
 
-afeaf
+### Вывод
+Мы научились использовать встроенный в postgresql  инструмент pgbench для тестирвоания БД.
