@@ -79,6 +79,8 @@ create table game(
     alter table main  add foreign key (customer_code) references customer;
     alter table main add foreign key (disk_name) references game;
 ```
+Сейчас по сути, первая и главная таблица является вспомогательной таблицой, в отношении Многие ко Многим между таблицами game и customer
+
 
 Теперь у нас остался лишь 1 атрибут - Залог(pledge).
 Неключевой атрибут pledge зависит от ключа КС, КЭ в целом, а не от его части. Значит, это отношение находится в 2НФ.
