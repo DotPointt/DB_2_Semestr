@@ -1,0 +1,11 @@
+SELECT *
+FROM goods
+WHERE retail_price > 100.0;
+
+select name, description, retail_price, date
+from goods left join deals on goods.goods_id = deals.goods_id
+where goods.retail_price > 0.5;
+
+select * 
+from deals
+where quantity >= 2;

@@ -32,7 +32,7 @@ create table deals(
 
 1) Заполняю данными от chatgpt
 ```sql
-
+  INSERT INTO customers ( name,address, phone_number) VALUES
   ('Charlie Brown', '654 Pine St, CityE', '555-8765'),
   ('Laura Davis', '789 Birch St, CityF', '555-3456'),
   ('Michael Lee', '456 Cedar St, CityG', '555-7890'),

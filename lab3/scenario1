@@ -1,0 +1,2 @@
+SELECT name, description FROM goods
+where retail_price - wholesale_price > 0;

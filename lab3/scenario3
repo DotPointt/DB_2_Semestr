@@ -1,0 +1,17 @@
+SELECT Avg(retail_price) as average_retail_price
+FROM goods;
+
+select sum(retail_price) as all_price from goods
+where UPPER(name) != 'LAPTOP';
+
+select * from goods
+where goods_id > 500;
+
+select * from goods
+where goods_id = 330;
+
+select * from goods
+where goods_id < 40;
+
+select * from goods
+where goods_id < 150;
