@@ -1,36 +1,18 @@
-# Лабораторная 1
-## Цель: Провести оценку производитеьлности с помощью PGBENCH
-### Концептуальный вид бд
+# Лабораторная работа 5
+
+### База данных: NFT Магазин
+
+Даталогический вид
+
 ![alt text](image.png)
 
-### физическая модель:
-```sql
-create table customers(
-	customer_id serial primary key,
-	name varchar,
-	address varchar,
-	phone_number varchar
-);
 
-create table goods(
-	goods_id serial primary key,
-	name varchar,
-	description varchar,
-	retail_price float,
-	wholesale_price float
-);
+Создаём базу данных на PostgreSQL.
 
-create table deals(
-	id serial primary key,
-	customer_id int references customers(customer_id),
-	goods_id int references goods(goods_id),
-	quantity int check( quantity > 0),
-	date date,
-	is_wholesale bool
-);
-```
 
-1) Заполняю данными от chatgpt
+
+### заполняем данными
+
 ```sql
   INSERT INTO customers ( name,address, phone_number) VALUES
   ('Charlie Brown', '654 Pine St, CityE', '555-8765'),
@@ -184,35 +166,95 @@ INSERT INTO deals (customer_id, goods_id, quantity, date, is_wholesale) VALUES
   (18, 12, 5, '2026-01-15', true),
   (19, 14, 1, '2026-02-28', false),
   (20, 16, 2, '2026-03-12', false);
- 
 ```
 
-## Переходим к тестирвоанию
-### Инициализация
-![alt text](image-1.png)
+## GIST индекс
+### В качестве текстового поля буду использовать поля name и description в табилце goods и заполняю её случайными данными с помощью Python библиотеки faker
 
-Теперь у нас есть база, заполненная таблицами и данными необходимыми для запуска тестов.
+Чтобы полнотекстовый поиск работал быстро, нужно, во-первых, хранить в таблице столбец типа tsvector (чтобы не выполнять дорогое преобразование каждый раз при поиске)
 
-### Запуск базового теста
-c 50
+```sql
+alter table goods add column tsv tsvector
+update goods set tsv = to_tsvector(description);
+```
+Так как мои текстовые поля написаны на английском на всякий случай установмим
+
+```sql
+set default_text_search_config = english;
+```
+
+Создаем индекс и тестируем!
+
+```sql
+explain analyze
+select tsv @@ to_tsquery('adult & book') from goods;
+```
+__Без индекса__
+
 ![alt text](image-2.png)
 
-со 150
-![alt text](image-3.png)
-выходит ошибка FATAL ERROR
-однако увеличив количество подключений процесс идет нормально
+__С индексом__
+
 ![alt text](image-4.png)
 
-## Создание и тестирование пула соединений
-устанавливаем pgbouncer
 
-после установки пула запускаем тест также, на 150 подключений
+### как мы видим поисковый запрос строки с ключевыми словами значительно ускорился с использованием GIST индекса.
+
+## B-tree
+
+```sql
+--btree
+create index idx_btree on goods using btree (description);
+
+select * from goods where goods.description like '%blood%'
+```
+Получая информацию об использовании индексов, видим, что данный индекс не используется в этом запросе
+
+![alt text](image-3.png)
 
 
 
+## GIN
+
+```sql 
+--GIN
+create index on goods using gin(tsv);
+drop index goods_tsv_idx1;
+
+explain analyze
+select * from goods
+where tsv @@ to_tsquery('adult & book');
+```
+
+
+#### Тестируем:
 
 ![alt text](image-5.png)
-![alt text](image-6.png)
 
-### Вывод
-Мы научились использовать встроенный в postgresql  инструмент pgbench для тестирвоания БД.
+__Скорость полнотекстового поиска сравнима с GIST индексом и так же сильно превосходит оычный B-tree__
+
+Как правило, GIN выигрывает в точности и скорости поиска у GiST. Если данные изменяются не часто, а искать надо быстро — скорее всего выбор падет на GIN.
+
+С другой стороны, если данные изменяются активно, накладные расходы на обновление GIN могут оказаться слишком велики. В этом случае придется сравнивать оба варианта и выбирать тот, чьи показатели будут лучше сбалансированы.
+
+
+## RUM
+
+Индекс RUM является улучшенной версией GIN \
+Во-первых, тип данных tsvector, помимо самих лексем, содержит информацию об их позициях внутри документа. В GIN-индексе, как мы видели в прошлый раз, эта информация не сохраняются.
+RUM Помогает преодолеть эту проблему
+
+```sql
+CREATE INDEX ON goods USING RUM(description);
+```
+
+
+## BRIN
+
+Идея: Индекс BRIN работает на основе блоков и диапазонов данных. Он идеально подходит для ситуаций, когда значения в столбцах имеют корреляцию с их физическим расположением на диске. BRIN индекс не хранит ссылки на строки, что делает его более экономичным по памяти.
+
+Создание BRIN индекса для эффективного поиска по диапазонам данных:
+
+```sql
+CREATE INDEX ON goods USING BRIN(description);
+```
